@@ -15,13 +15,8 @@ hub/video/*_viejo.mp4
 hub/video/*_eevee.mp4
 hub/video/*_texturas.mp4
 
-# fotos de caras de personas reales: no se publican (cada quien pone las suyas)
-camara/caras/*
-!camara/caras/LEEME.txt
 
 # notas internas de los proyectos originales
 CLAUDE.md
 
-# el logo con la figura queda solo en el computador; la versión publicada usa logo-texto.png
-camara/assets/logo.png
 hub/video/*_cycles_v1.mp4
