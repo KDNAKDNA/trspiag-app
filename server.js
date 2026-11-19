@@ -9,7 +9,8 @@
 // Los otros laptops entran por la red local con la IP que se imprime al arrancar.
 //
 //   /           hub (cuarto + menú)
-//   /coro/      coro y batería (tortugas del dragón y la rata cósmica)
+//   /coro/      coro armónico (tortugas del dragón y la rata cósmica)
+//   /bateria/   caja de ritmos (batería sintetizada)
 //   /camara/    censura en vivo + visuales
 //   /envivo/    panel: quién está conectado y qué está sonando
 //   /objetos/   visor 3D (Three.js) de los modelos de Blender
@@ -37,6 +38,7 @@ const MOUNTS = [
   ["/camara/", "camara"],
   ["/envivo/", "envivo"],
   ["/objetos/", "objetos"],
+  ["/bateria/", "bateria"],
   ["/comun/", "comun"],
   ["/", "hub"],
 ];

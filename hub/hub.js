@@ -10,7 +10,7 @@
 const MODULOS = {
   envivo: "envivo/",
   componer: "coro/",
-  bateria: "coro/",
+  bateria: "bateria/",
   camara: "camara/",
   canciones: "coro/",
   conectar: "envivo/",

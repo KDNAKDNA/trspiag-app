@@ -52,6 +52,8 @@
   <div class="linea"></div>
   <h2 style="font-size:16px;color:#ffb000">VOCES</h2>
   <div class="fila" id="voces"></div>
+  <h2 style="font-size:16px;color:#ffb000">BATERÍA</h2>
+  <div class="fila" id="bateria"></div>
   <h2 style="font-size:16px;color:#ffb000">ACORDE</h2>
   <div class="fila"><span class="luz" id="acorde" style="font-size:28px">---</span></div>
 
@@ -65,7 +67,7 @@
     const BAT = ["BOMBO", "CAJA", "HAT", "HAT ABIERTO", "PALMAS", "TOM"];
     const $ = id => document.getElementById(id);
     const luces = (cont, nombres) => nombres.map(n => { const s = document.createElement("span"); s.className = "luz"; s.textContent = n; cont.appendChild(s); return s; });
-    const lv = luces($("voces"), VOCES);
+    const lv = luces($("voces"), VOCES), lb = luces($("bateria"), BAT);
     const prende = (el, ms) => { el.classList.add("on"); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("on"), ms); };
     const log = [];
     function anota(t) {
@@ -81,10 +83,11 @@
       $("tempo").textContent = (d.sonando ? "▶ " : "■ ") + "BPM " + (d.bpm || "---");
       const roles = {};
       for (const c of d.clientes) { roles[c.rol] = (roles[c.rol] || 0) + 1; }
-      $("quien").innerHTML = ["coro", "camara", "panel"].map(r => `${r === "camara" ? "CÁMARA" : r.toUpperCase()}: ${roles[r] || 0}`).join("<br>");
+      $("quien").innerHTML = ["coro", "bateria", "camara", "panel"].map(r => `${r === "camara" ? "CÁMARA" : r === "bateria" ? "BATERÍA" : r.toUpperCase()}: ${roles[r] || 0}`).join("<br>");
     });
     EnVivo.escucha(e => {
       if (e.type === "note" && lv[e.ci]) { prende(lv[e.ci], Math.max(120, (e.dur || .2) * 1000)); }
+      else if (e.type === "dhit" && lb[e.i]) { prende(lb[e.i], 110); }
       else if (e.type === "chord") { $("acorde").textContent = e.nombre || "?"; prende($("acorde"), 200); }
       else if (e.type === "bank") { anota("PATRÓN " + "ABCD"[e.bank]); }
       else if (e.type === "play") { anota("PLAY · BPM " + (e.bpm || "")); }

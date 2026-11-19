@@ -3,7 +3,9 @@
 App para el show en vivo. Tiene tres partes y un hub:
 
 - **Hub:** el cuarto en 3D. La cámara entra en la TV y el menú de la TV es el hub.
-- **Coro del Dragón:** voces de la Rata Cósmica y las Tortugas del Dragón, más la batería.
+- **Coro del Dragón:** voces de la Rata Cósmica y las Tortugas del Dragón, con armonía y progresiones.
+- **Caja de ritmos:** batería sintetizada de 6 pistas; cada golpe dispara efectos en la cámara.
+- **Objetos 3D:** visor con Three.js de los modelos exportados de Blender.
 - **Cámara:** proyección con las caras censuradas. **Reacciona a la música del coro.**
 - **En vivo:** panel con quién está conectado y qué está sonando.
 

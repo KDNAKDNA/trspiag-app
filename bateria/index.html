@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CAJA DE RITMOS · TRANSPARENCIA</title>
+  <style>
+    @font-face { font-family: "TransMono"; src: url("../fonts/LiberationMono-Bold.ttf") format("truetype"); }
+    html, body { margin: 0; background: #020a04; }
+    body { font: 14px/1.3 "TransMono", ui-monospace, Menlo, monospace; color: #7cff8a; }
+
+    /* barra superior, igual que en el coro */
+    .barra {
+      position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      padding: 10px 16px; background: #020a04; border-bottom: 2px solid #2f8a3e;
+      text-transform: uppercase; text-shadow: 0 0 6px rgba(124, 255, 138, .45);
+    }
+    .barra a { color: #ffb000; text-decoration: none; border: 2px solid #ffb000; padding: 4px 9px; }
+    .barra a:hover { background: #ffb000; color: #020a04; text-shadow: none; }
+    .sep { width: 2px; height: 22px; background: #2f8a3e; }
+    .ambar { color: #ffb000; }
+    #envivo { margin-left: auto; color: #ffb000; }
+    main { max-width: 1240px; margin: 0 auto; padding: 16px; }
+
+    /* la batería con colores de computador viejo (solo cambia sus variables y la letra) */
+    body .bt-root {
+      --bt-bg: #06140a; --bt-panel: #0a1d0f; --bt-row: #0b1f10; --bt-row2: #0d2413; --bt-ink: #7cff8a;
+      --bt-muted: #2f8a3e; --bt-line: #2f8a3e; --bt-field: #020a04; --bt-cell: #10291a; --bt-cell2: #163522;
+      --bt-off: #07130b; --bt-accent: #ffb000; --bt-rec: #ff3d8b;
+      font-family: "TransMono", ui-monospace, Menlo, monospace; text-transform: uppercase;
+      border: 2px solid #2f8a3e; border-radius: 0;
+      text-shadow: 0 0 5px rgba(124, 255, 138, .35);
+    }
+    body .bt-root .bt-btn { border-radius: 0; border-width: 2px; }
+    body .bt-root .bt-step { border-radius: 2px; }
+    body .bt-root .bt-title { color: #7cff8a; text-shadow: 2px 1px 0 #ff3d8b, 0 0 8px rgba(124, 255, 138, .5); letter-spacing: 1px; }
+
+    .crt { position: fixed; inset: 0; pointer-events: none; z-index: 10;
+      background: repeating-linear-gradient(to bottom, rgba(0,0,0,.14) 0, rgba(0,0,0,.14) 1px, transparent 1px, transparent 3px),
+                  radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,.45) 100%);
+      animation: parpadeo 120ms steps(2) infinite; }
+    @keyframes parpadeo { 50% { opacity: .92; } }
+  </style>
+</head>
+<body>
+  <div class="barra">
+    <a href="../">&lt;- HUB</a>
+    <span class="sep"></span>
+    <span>CAJA DE RITMOS</span>
+    <span class="ambar">BOMBO · CAJA · HATS · PALMAS · TOM</span>
+    <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="sincro" checked> SINCRO CON EL CORO</label>
+    <span id="envivo">EN VIVO: …</span>
+  </div>
+  <main id="bateria"></main>
+  <div class="crt" aria-hidden="true"></div>
+
+  <script src="bateria.js"></script>
+  <script src="../comun/envivo.js"></script>
+  <script>
+    // La batería manda cada golpe al canal en vivo: la cámara reacciona y el panel lo muestra.
+    // Play/Stop y el tempo se comparten con el coro (si "sincro" está marcado).
+    const GUARDADO = "transparencia-bateria";
+    let inicial = null;
+    try { inicial = JSON.parse(localStorage.getItem(GUARDADO) || "null"); } catch (e) { inicial = null; }
+
+    let remoto = false;   // true mientras se aplica algo que llegó de otro laptop
+    const sincro = document.getElementById("sincro");
+    const bateria = BateriaAlcantarilla.mount(document.getElementById("bateria"), {
+      state: inicial || undefined,
+      keys: "global",
+      onChange: s => { try { localStorage.setItem(GUARDADO, JSON.stringify(s)); } catch (e) { /* sin almacenamiento */ } },
+      onHit: (i, v) => EnVivo.envia({ type: "dhit", i, vel: v }),
+      onBank: b => EnVivo.envia({ type: "bank", bank: b }),
+      onPlay: bpm => { if (!remoto && sincro.checked) EnVivo.envia({ type: "play", bpm }); },
+      onStop: () => { if (!remoto && sincro.checked) EnVivo.envia({ type: "stop" }); },
+    });
+    const titulo = document.querySelector(".bt-title");
+    if (titulo) titulo.textContent = "CAJA DE RITMOS DESTRIPADA";
+
+    EnVivo.conecta("bateria", "BATERÍA");
+    EnVivo.escucha(e => {
+      if (!sincro.checked) return;
+      remoto = true;
+      try {
+        if (e.type === "bpm" || (e.type === "play" && e.bpm)) bateria.setBpm(e.bpm);
+        if (e.type === "play" && !bateria.isPlaying()) bateria.play();
+        if (e.type === "stop" && bateria.isPlaying()) bateria.stop();
+      } finally { remoto = false; }
+    });
+    const ind = document.getElementById("envivo");
+    EnVivo.escuchaEstado(d => { const n = d.clientes.length; ind.textContent = `EN VIVO: ${n} CONECTADO${n === 1 ? "" : "S"}`; });
+    setInterval(() => { if (!EnVivo.conectado) ind.textContent = "EN VIVO: SIN SERVIDOR"; }, 2000);
+  </script>
+</body>
+</html>
