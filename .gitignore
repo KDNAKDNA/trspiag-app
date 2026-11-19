@@ -10,7 +10,7 @@ data/
 *.blend1
 hub/blender/
 hub/video/frames/
-hub/video/frames_cycles/
+hub/video/frames_cycles*/
 hub/video/*_viejo.mp4
 hub/video/*_eevee.mp4
 hub/video/*_texturas.mp4
@@ -24,3 +24,4 @@ CLAUDE.md
 
 # el logo con la figura queda solo en el computador; la versión publicada usa logo-texto.png
 camara/assets/logo.png
+hub/video/*_cycles_v1.mp4
