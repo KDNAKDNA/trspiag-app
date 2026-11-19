@@ -209,7 +209,14 @@ function componeVideo(v, texto) {
 // ---------- Cambios de modo ----------
 function cambia(m) { modo = m; t0 = performance.now(); }
 
+// pantalla completa con el primer toque (los navegadores no dejan hacerlo sin un gesto)
+function pantallaCompleta() {
+  const el = document.documentElement;
+  if (!document.fullscreenElement && el.requestFullscreen) { el.requestFullscreen().catch(() => {}); }
+}
+
 function encender() {
+  pantallaCompleta();
   Sonido.iniciar(); Sonido.encender();
   CRT.P.power = 0; arranqueTxt = "";
   cambia("arranque");
@@ -283,8 +290,10 @@ async function activar(i) {
 }
 
 // ---------- Entrada ----------
+let primerToque = true;
 function alPulsar(e) {
   Sonido.iniciar();
+  if (primerToque) { primerToque = false; pantallaCompleta(); }
   if (modo === "espera") { encender(); return; }
   if (modo === "arranque") { return; }
   if (modo === "videoIn") { entrarHub(); return; }        // saltar el video
