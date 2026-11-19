@@ -7,7 +7,7 @@ const SCALES = 9, EXTS = 6, MODES = 3, RATES = 3;
 // [mín, máx, por defecto, entero] — los mismos parámetros que P en public/sketch.js
 const PARAMS = {
   bpm: [50, 180, 92, true], swing: [0, .6, 0], gate: [.1, 2, .9], glide: [0, .2, .03],
-  release: [.02, 2, .25], vib: [0, 40, 18, true],
+  release: [.02, 2, .25], vib: [0, 40, 18, true], lift: [-12, 12, 0, true],
   tonic: [0, 11, 0, true], scale: [0, SCALES - 1, 0, true],
   wave: [0, 3, 0, true], oct: [0, 2, 1, true], attack: [.002, .5, .01], detune: [0, 40, 8, true],
   slevel: [0, 1.2, .8], clevel: [0, 1.2, .9],
@@ -52,7 +52,7 @@ function cleanProg(p) {
     rate: num(p.rate, 0, RATES - 1, 1, true),        // 0 ½ compás, 1 un compás, 2 dos compases
     slots: Array.from({ length: SLOTS }, (_, k) => {
       const s = obj(slots[k]);
-      return { deg: num(s.deg, 0, 6, given ? 0 : (DEFAULT_PROG[k] ?? 0), true), ext: num(s.ext, 0, EXTS - 1, 0, true) };
+      return { deg: num(s.deg, 0, 6, given ? 0 : (DEFAULT_PROG[k] ?? 0), true), ext: num(s.ext, 0, EXTS - 1, 0, true), lift: num(s.lift, -2, 2, 0, true) };
     }),
   };
 }

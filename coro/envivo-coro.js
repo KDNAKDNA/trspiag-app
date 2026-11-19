@@ -32,6 +32,18 @@
     }
   };
 
+  // 1b) Acordes tocados en vivo con el teclado (Q W E R T Y U): también llegan a la cámara
+  if (typeof liveChordOn === "function") {
+    const acordeOriginal = liveChordOn;
+    window.liveChordOn = function (deg, seventh, key) {
+      acordeOriginal(deg, seventh, key);
+      if (typeof liveChord !== "undefined" && liveChord && liveChord.ch) {
+        const ch = liveChord.ch;
+        EnVivo.envia({ type: "chord", idx: 0, nombre: ch.name, midi: ch.voicing ? ch.voicing[0] : undefined });
+      }
+    };
+  }
+
   // 2) Play / Stop con arranque sincronizado
   const toggleOriginal = togglePlay;
   function arrancarEn(en) {

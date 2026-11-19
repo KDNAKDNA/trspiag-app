@@ -26,6 +26,13 @@
 //    terminar el compás; "Cadena" los encadena.
 //  - Escenario: mantén pulsado un personaje (o teclas A S D F G) y canta
 //    en vivo sobre el acorde; arriba = agudo. Con ● Rec + Play se graba.
+//  - ACORDES CON EL TECLADO: Q W E R T Y U tocan los acordes de los grados
+//    I a VII de la escala (con Mayús, con séptima) mientras los mantienes.
+//    Con ● Rec: detenido, cada acorde se escribe en la tarjeta elegida y pasa
+//    a la siguiente; sonando, reemplaza el acorde que está sonando.
+//  - ← → transponen la progresión medio tono (cambian la tónica).
+//    ↑ ↓ y la perilla "Altura" suben o bajan el registro de toda la progresión;
+//    ▲ ▼ en cada tarjeta suben o bajan solo ese acorde. 0 = grabar.
 //  - Perillas: arrastra en vertical o usa la rueda del ratón.
 // =====================================================================
 
@@ -91,7 +98,7 @@ const DTIMES = [.25, .5, .75, 1, 1.5], DT_NAMES = ["1/16", "1/8", "1/8 ·", "1/4
 
 // Todos los parámetros del sinte y del secuenciador (lib/song.js valida los mismos)
 const P = {
-  bpm: 92, swing: 0, gate: .9, glide: .03, release: .25, vib: 18, tonic: 0, scale: 0,
+  bpm: 92, swing: 0, gate: .9, glide: .03, release: .25, vib: 18, tonic: 0, scale: 0, lift: 0,
   wave: 0, oct: 1, attack: .01, detune: 8, slevel: .8, clevel: .9,
   pad: .3, padAtk: .25, padTone: 2200,
   ftype: 0, cutoff: 7000, reso: 2, lfoRate: .4, lfoDepth: .2,
@@ -153,9 +160,11 @@ function nearestIn(pc, target, lo, hi) {
   }
   return best;
 }
-function voiceChord(pcs, prev) {
-  const center = i => (CHARS[i].low + CHARS[i].high) / 2;
-  const ref = i => (prev ? prev[i] : center(i));
+// lift: semitonos para subir (+) o bajar (−) el registro buscado; las voces no salen de su rango
+function voiceChord(pcs, prev, lift) {
+  lift = lift || 0;
+  const center = i => (CHARS[i].low + CHARS[i].high) / 2 + lift;
+  const ref = i => (prev ? (prev[i] * 2 + center(i)) / 3 : center(i));
   const bass = nearestIn(pcs[0], ref(0), CHARS[0].low, CHARS[0].high);
   const cand = [1, 2, 3, 4].map(i => pcs.map(pc => nearestIn(pc, ref(i), CHARS[i].low, CHARS[i].high)));
   const n = pcs.length;
@@ -169,7 +178,7 @@ function voiceChord(pcs, prev) {
           let score = 0;
           for (let k = 1; k < n; k++) { if (!covered.has(k)) score += (n === 4 && k === 2) ? 3 : 8; }
           for (let k = 0; k < 4; k++) {
-            score += Math.abs(notes[k] - ref(k + 1)) + .15 * Math.abs(notes[k] - center(k + 1));
+            score += Math.abs(notes[k] - ref(k + 1)) + .3 * Math.abs(notes[k] - center(k + 1));
             if (k > 0 && notes[k] < notes[k - 1]) score += 12;
             if (k > 0 && notes[k] === notes[k - 1]) score += 3;
           }
@@ -194,7 +203,7 @@ function noteFor(i, mode, t, ch) {
 const STEPS = 16, SLOTS = 8;
 function emptyRow(mode) { return { len: 16, pulses: 0, mute: false, solo: false, mode: mode ?? 1, steps: Array.from({ length: STEPS }, () => ({ on: false, t: .5 })) }; }
 function progFrom(list, rate) {
-  const slots = Array.from({ length: SLOTS }, (_, k) => ({ deg: list[k] ? list[k][0] : 0, ext: list[k] ? list[k][1] : 0 }));
+  const slots = Array.from({ length: SLOTS }, (_, k) => ({ deg: list[k] ? list[k][0] : 0, ext: list[k] ? list[k][1] : 0, lift: 0 }));
   return { len: list.length, rate: rate ?? 1, slots };
 }
 function emptyBank() { return { mel: CHARS.map(() => emptyRow(1)), prog: progFrom(PRESETS[0].p) }; }
@@ -227,7 +236,7 @@ function randomProg(pr) {
     if (k > 0) { const opts = next[d]; d = opts[Math.floor(Math.random() * opts.length)]; }
     if (k === len - 1 && d === 0) d = 4;                       // cierra en la dominante para volver al inicio
     const r = Math.random();
-    pr.slots[k] = { deg: d, ext: r < .65 ? 0 : r < .85 ? 1 : r < .93 ? 3 : 4 };
+    pr.slots[k] = { deg: d, ext: r < .65 ? 0 : r < .85 ? 1 : r < .93 ? 3 : 4, lift: 0 };
   }
   pr.len = len;
 }
@@ -262,7 +271,7 @@ const bankEmpty = b => banks[b].mel.every(r => !r.steps.some(s => s.on));
 function cleanRow(r) {
   return { len: r.len, pulses: r.pulses, mute: !!r.mute, solo: !!r.solo, mode: r.mode ?? 1, steps: r.steps.map(st => ({ on: !!st.on, t: st.t })) };
 }
-function cleanProg(p) { return { len: p.len, rate: p.rate, slots: p.slots.map(s => ({ deg: s.deg, ext: s.ext })) }; }
+function cleanProg(p) { return { len: p.len, rate: p.rate, slots: p.slots.map(s => ({ deg: s.deg, ext: s.ext, lift: s.lift || 0 })) }; }
 function getSongData() {
   return {
     version: 2, bank, chain,
@@ -456,13 +465,58 @@ function applyParams() {
 // ---------- Acorde actual ----------
 let playChord = null;                    // el que suena (llega por la cola visual)
 let selCache = { key: "", ch: null };
-const chordKey = (b, k) => { const s = banks[b].prog.slots[k]; return [b, k, s.deg, s.ext, P.tonic, P.scale].join("|"); };
+const LIFT_STEP = 5;                     // semitonos por cada ▲ ▼ de una tarjeta
+const chordKey = (b, k) => { const s = banks[b].prog.slots[k]; return [b, k, s.deg, s.ext, s.lift, P.tonic, P.scale, P.lift].join("|"); };
 function slotChord(k, prev) {
-  const info = chordInfo(prog().slots[k]);
-  return Object.assign(info, { voicing: voiceChord(info.pcs, prev), idx: k });
+  const slot = prog().slots[k], info = chordInfo(slot);
+  return Object.assign(info, { voicing: voiceChord(info.pcs, prev, P.lift + (slot.lift || 0) * LIFT_STEP), idx: k });
 }
-// Con el secuenciador andando: el acorde que suena. Detenido: el casillero elegido.
+// Acorde tocado con el teclado (Q–U); mientras se mantiene, manda sobre todo lo demás
+let liveChord = null, lastLiveVoicing = null;
+const CHORD_KEYS = ["q", "w", "e", "r", "t", "y", "u"];
+function liveChordOn(deg, seventh, key) {
+  unlockAudio(); if (!ac) return;
+  const slot = { deg, ext: seventh ? 1 : 0, lift: 0 }, info = chordInfo(slot);
+  const prev = playing ? lastVoicing : lastLiveVoicing;
+  const ch = Object.assign(info, { voicing: voiceChord(info.pcs, prev, P.lift), idx: -1 });
+  liveChord = { key, slot, ch }; lastLiveVoicing = ch.voicing;
+  padChordAt(ac.currentTime, ch.voicing);
+  if (rec) recordChord(slot, ch);
+}
+function liveChordOff(key) {
+  if (!liveChord || liveChord.key !== key) return;
+  liveChord = null;
+  if (playing) schedKey = "";                  // el pad vuelve al acorde de la progresión en el próximo paso
+  else if (ac) padStop();
+}
+// Grabar un acorde en la progresión
+function recordChord(slot, ch) {
+  const pr = prog();
+  let k;
+  if (playing) k = playChord && playChord.idx >= 0 ? playChord.idx : 0;   // reemplaza el que suena
+  else {
+    k = Math.min(selSlot, SLOTS - 1);                                     // escribe y avanza
+    if (k >= pr.len) pr.len = k + 1;
+    selSlot = Math.min(k + 1, SLOTS - 1);
+  }
+  pr.slots[k] = { deg: slot.deg, ext: slot.ext, lift: 0 };
+  if (playing) schedKey = "";
+  flash(`● ${ch.name} grabado en la tarjeta ${k + 1}`);
+}
+// Transponer y cambiar la altura de toda la progresión
+function transpose(d) {
+  P.tonic = (P.tonic + d + 12) % 12;
+  flash(`Tonalidad: ${NAMES[P.tonic]} ${SCALES[P.scale].name.toLowerCase()}`);
+  if (!liveChord) auditionChord();
+}
+function setLift(v) {
+  P.lift = Math.max(-12, Math.min(12, v));
+  flash(`Altura de la progresión: ${P.lift > 0 ? "+" : ""}${P.lift} semitonos`);
+  if (!liveChord) auditionChord();
+}
+// Con un acorde tocado en vivo: ese. Con el secuenciador andando: el que suena. Detenido: el casillero elegido.
 function displayChord() {
+  if (liveChord) return liveChord.ch;
   if (playing && playChord) return playChord;
   const k = Math.min(selSlot, prog().len - 1), key = chordKey(bank, k);
   if (selCache.key !== key) selCache = { key, ch: slotChord(k, null) };
@@ -503,7 +557,7 @@ function scheduleStep(s, time) {
   }
   // acorde de este paso; si cambió, nueva conducción de voces y nuevo pad
   const pr = prog(), ci = Math.floor((s - bankStart) / RATES[pr.rate]) % pr.len, key = chordKey(bank, ci);
-  if (key !== schedKey) {
+  if (key !== schedKey && !liveChord) {
     schedKey = key;
     schedChord = slotChord(ci, lastVoicing); lastVoicing = schedChord.voicing;
     padChordAt(time, schedChord.voicing);
@@ -515,7 +569,7 @@ function scheduleStep(s, time) {
     const idx = s % r.len, c = CHARS[i];
     visQ.push({ time, type: "ph", row: i, idx });
     if (c.live) {                         // cantando en vivo: se graba o se respeta
-      if (rec) r.steps[idx] = { on: true, t: c.t };
+      if (rec && !c.chordLive) r.steps[idx] = { on: true, t: c.t };
       return;
     }
     const st = r.steps[idx];
@@ -600,7 +654,7 @@ const hz = v => v >= 1000 ? (v / 1000).toFixed(1) + " kHz" : Math.round(v) + " H
 function buildUI() {
   // transporte
   addBtn({ x: 616, y: 14, w: 96, h: 36, label: () => playing ? "■ Stop" : "▶ Play", on: () => playing, click: togglePlay });
-  addBtn({ x: 720, y: 14, w: 78, h: 36, label: () => "● Rec", on: () => rec, click: () => { rec = !rec; flash(rec ? "Rec: canta en el escenario mientras suena" : "Rec apagado"); }, col: "#ff3d8b" });
+  addBtn({ x: 720, y: 14, w: 78, h: 36, label: () => "● Rec", on: () => rec, click: () => { rec = !rec; flash(rec ? "Rec: toca acordes (Q–U) o canta, y se graban" : "Rec apagado"); }, col: "#ff3d8b" });
   "ABCD".split("").forEach((L, j) => addBtn({ x: 812 + j * 42, y: 14, w: 38, h: 36, label: () => L, on: () => bank === j, pending: () => pendingBank === j, click: () => selectBank(j) }));
   addBtn({ x: 988, y: 14, w: 84, h: 36, label: () => "Cadena", on: () => chain, click: () => chain = !chain, col: "#7b49c4" });
   addBtn({ x: 1080, y: 14, w: 104, h: 36, label: () => "Copiar →", click: copyToNext });
@@ -660,9 +714,10 @@ function buildUI() {
   NAMES.forEach((n, j) => addBtn({ x: 78 + j * 44, y: KEY_Y, w: 40, h: 30, size: 11, label: () => n, on: () => P.tonic === j, click: () => { P.tonic = j; auditionChord(); }, col: HAR_COL }));
   addBtn({ x: 690, y: KEY_Y, w: 30, h: 30, label: () => "◀", click: () => { P.scale = (P.scale + SCALES.length - 1) % SCALES.length; auditionChord(); } });
   addBtn({ x: 914, y: KEY_Y, w: 30, h: 30, label: () => "▶", click: () => { P.scale = (P.scale + 1) % SCALES.length; auditionChord(); } });
-  pKnob("pad", { x: 1000, y: 806, r: 16, label: "Pad", col: HAR_COL, min: 0, max: 1, fmt: pct });
-  pKnob("padAtk", { x: 1062, y: 806, r: 16, label: "Entrada", col: HAR_COL, min: .01, max: 2, log: true, fmt: ms });
-  pKnob("padTone", { x: 1124, y: 806, r: 16, label: "Brillo", col: HAR_COL, min: 300, max: 8000, log: true, fmt: hz });
+  pKnob("lift", { x: 982, y: 806, r: 16, label: "Altura", col: HAR_COL, min: -12, max: 12, step: 1, fmt: v => (v > 0 ? "+" : "") + v + " st" });
+  pKnob("pad", { x: 1034, y: 806, r: 16, label: "Pad", col: HAR_COL, min: 0, max: 1, fmt: pct });
+  pKnob("padAtk", { x: 1086, y: 806, r: 16, label: "Entrada", col: HAR_COL, min: .01, max: 2, log: true, fmt: ms });
+  pKnob("padTone", { x: 1138, y: 806, r: 16, label: "Brillo", col: HAR_COL, min: 300, max: 8000, log: true, fmt: hz });
 
   // armonía: tarjetas de la progresión
   for (let k = 0; k < SLOTS; k++) {
@@ -677,6 +732,8 @@ function buildUI() {
     addBtn({ x: x + 8, y: y + 114, w: 30, h: 28, label: () => "−", hidden, click: () => { slot().deg = (slot().deg + 6) % 7; pick(); auditionChord(); } });
     addBtn({ x: x + 42, y: y + 114, w: 30, h: 28, label: () => "+", hidden, click: () => { slot().deg = (slot().deg + 1) % 7; pick(); auditionChord(); } });
     addBtn({ x: x + 76, y: y + 114, w: 56, h: 28, size: 11, label: () => EXTS[slot().ext].short, hidden, click: () => { slot().ext = (slot().ext + 1) % EXTS.length; pick(); auditionChord(); }, col: HAR_COL });
+    addBtn({ x: x + 70, y: y + 6, w: 22, h: 20, size: 10, label: () => "▼", hidden, click: () => { slot().lift = Math.max(-2, (slot().lift || 0) - 1); pick(); auditionChord(); } });
+    addBtn({ x: x + 114, y: y + 6, w: 22, h: 20, size: 10, label: () => "▲", hidden, click: () => { slot().lift = Math.min(2, (slot().lift || 0) + 1); pick(); auditionChord(); } });
   }
 
   // armonía: largo, ritmo armónico, ideas y azar
@@ -788,11 +845,15 @@ function setup() {
     const k = e.key.toLowerCase();
     if (k === " ") { e.preventDefault(); if (!e.repeat) togglePlay(); return; }
     if ("1234".includes(k) && k.length === 1) { selectBank(+k - 1); return; }
-    if (k === "r" && !e.repeat) { rec = !rec; return; }
+    if (k === "0" && !e.repeat) { rec = !rec; flash(rec ? "Rec: toca acordes (Q–U) o canta, y se graban" : "Rec apagado"); return; }
+    const ci = CHORD_KEYS.indexOf(k);
+    if (ci >= 0) { e.preventDefault(); if (!e.repeat) liveChordOn(ci, e.shiftKey, k); return; }
+    if (k === "arrowleft" || k === "arrowright") { e.preventDefault(); transpose(k === "arrowright" ? 1 : -1); return; }
+    if (k === "arrowup" || k === "arrowdown") { e.preventDefault(); setLift(P.lift + (k === "arrowup" ? 1 : -1)); return; }
     if (CHARS.some(c => c.k === k)) { e.preventDefault(); if (!e.repeat) { unlockAudio(); heldKeys.add(k); } }
   });
-  window.addEventListener("keyup", e => heldKeys.delete(e.key.toLowerCase()));
-  window.addEventListener("blur", () => { heldKeys.clear(); pointers.clear(); });
+  window.addEventListener("keyup", e => { const k = e.key.toLowerCase(); heldKeys.delete(k); liveChordOff(k); });
+  window.addEventListener("blur", () => { heldKeys.clear(); pointers.clear(); if (liveChord) liveChordOff(liveChord.key); });
 }
 // El lienzo usa el ancho de <main> y crece hacia abajo (la página se desplaza)
 function sizeCanvas() {
@@ -822,9 +883,11 @@ function update() {
     let y = null;
     for (const p of pointers.values()) { if (p.col === i) y = p.y; }
     if (y === null && heldKeys.has(c.k)) y = lastStageY ?? ST.y + ST.h / 2;
-    const live = y !== null && !!ac;
+    c.chordLive = y === null && !!liveChord;
+    const live = (y !== null || c.chordLive) && !!ac;
     if (live) {
-      c.t = stageT(y); c.midi = liveNote(i, c.t);
+      if (c.chordLive) { c.t = .6; c.midi = liveChord.ch.voicing[i]; }
+      else { c.t = stageT(y); c.midi = liveNote(i, c.t); }
       c.v.liveMidi(c.midi); c.sv.liveMidi(c.midi);
       if (!c.live) { c.v.liveOn(); c.sv.liveOn(); }
     } else if (c.live) { c.v.liveOff(); c.sv.liveOff(); }
@@ -859,8 +922,8 @@ function drawHeader() {
   else if (!ac) s = "Haz clic en cualquier parte para encender el audio";
   else if (ac.state !== "running") s = "El audio está en pausa: haz clic en el lienzo para activarlo";
   else if (millis() < msgUntil) s = msg;
-  else if (rec) s = "● Grabando: lo que cantes en el escenario se escribe en el patrón";
-  else s = "Espacio play · A S D F G cantar · 1–4 patrones · R grabar · clic en un acorde para oírlo";
+  else if (rec) s = "● Grabando: toca acordes con Q–U o canta en el escenario";
+  else s = "Espacio play · Q–U acordes (Mayús = 7ª) · A S D F G cantar · ← → tonalidad · ↑ ↓ altura · 0 grabar · 1–4 patrones";
   text(s, 20, 44);
 }
 
@@ -885,7 +948,7 @@ function drawStage() {
   // acorde actual, arriba a la derecha
   const ch = displayChord();
   textAlign(RIGHT, TOP); fill(HAR_COL); textStyle(BOLD); textSize(18); text(ch.name, ST.x + ST.w - 12, ST.y + 8);
-  textStyle(NORMAL); textSize(10); fill("#3fae55"); text(`${ch.roman} · ${NAMES[P.tonic]} ${SCALES[P.scale].name.toLowerCase()}`, ST.x + ST.w - 12, ST.y + 32);
+  textStyle(NORMAL); textSize(10); fill("#3fae55"); text(`${ch.roman} · ${NAMES[P.tonic]} ${SCALES[P.scale].name.toLowerCase()}${P.lift ? ` · altura ${P.lift > 0 ? "+" : ""}${P.lift}` : ""}`, ST.x + ST.w - 12, ST.y + 32);
 
   if (stageHover) {
     const y = constrain(stageHover.y, ST.y, ST.y + ST.h), i = stageCol(stageHover.x), c = CHARS[i];
@@ -988,7 +1051,7 @@ function drawHarmony() {
   fill("#020a04"); stroke("#2f8a3e"); rect(332, BOT_Y, 114, 30, 8); rect(580, BOT_Y, 222, 30, 8); noStroke();
   fill("#7cff8a"); textSize(11); text(RATE_NAMES[pr.rate], 389, BOT_Y + 16); text(PRESETS[presetIdx].name, 691, BOT_Y + 16);
   fill("#3fae55"); textSize(10); textAlign(LEFT, CENTER);
-  text("Clic en una tarjeta para oír el acorde · − / + cambia el grado · el botón verde cambia el tipo · cada patrón A–D tiene su progresión", 18, BOT_Y + 50);
+  text("Clic en una tarjeta para oírla · − / + grado · botón verde: tipo · ▲ ▼ altura del acorde · teclas Q–U tocan acordes (Mayús = 7ª), con ● Rec se graban", 18, BOT_Y + 50);
 }
 
 function drawCard(w, hov) {
@@ -999,11 +1062,12 @@ function drawCard(w, hov) {
   else if (hov) { noFill(); stroke("#2f8a3e"); strokeWeight(1); rect(w.x, w.y, w.w, w.h, 12); noStroke(); }
   const ink = now ? "#020a04" : "#7cff8a", sub = now ? "#10291a" : "#3fae55";
   fill(act ? sub : "#2f8a3e"); textSize(10); textAlign(LEFT, TOP); text(k + 1, w.x + 10, w.y + 9);
+  if (act) { const lf = pr.slots[k].lift || 0; textAlign(CENTER, TOP); text(lf === 0 ? "·" : (lf > 0 ? "+" : "") + lf, w.x + 103, w.y + 10); }
   if (!act) { textAlign(CENTER, CENTER); textSize(11); text("+ agregar", w.x + w.w / 2, w.y + w.h / 2); return; }
   const info = chordInfo(pr.slots[k]);
-  fill(ink); textAlign(CENTER, CENTER); textStyle(BOLD); textSize(26); text(info.roman, w.x + w.w / 2, w.y + 40);
-  textSize(14); text(info.name, w.x + w.w / 2, w.y + 72); textStyle(NORMAL);
-  fill(sub); textSize(10); text(info.notes, w.x + w.w / 2, w.y + 94);
+  fill(ink); textAlign(CENTER, CENTER); textStyle(BOLD); textSize(26); text(info.roman, w.x + w.w / 2, w.y + 47);
+  textSize(14); text(info.name, w.x + w.w / 2, w.y + 77); textStyle(NORMAL);
+  fill(sub); textSize(10); text(info.notes, w.x + w.w / 2, w.y + 97);
 }
 
 function drawWidgets() {
