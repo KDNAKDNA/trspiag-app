@@ -1,6 +1,7 @@
 /*!
  * Batería de la Alcantarilla — caja de ritmos sintetizada (Web Audio, sin dependencias)
- * Versión TRANSPARENCIA: agrega las opciones onHit, onPlay, onStop, onBank y el método setBpm.
+ * Versión TRANSPARENCIA: agrega las opciones onHit, onPlay, onStop, onBank, startGate y los
+ * métodos setBpm, playNow y audioListo.
  *
  * Uso:
  *   <div id="bateria"></div>
@@ -383,9 +384,16 @@
         r.pulses = 0; renderRow(i); emit();
       }
     }
+    // TRANSPARENCIA: si la app da "startGate", ella decide el instante del arranque (sincronía entre laptops)
     function play() {
       unlock(); if (!ac || playing) return;
-      playing = true; gStep = 0; nextTime = ac.currentTime + .06; render();
+      if (typeof options.startGate === "function") { options.startGate(playNow); return; }
+      playNow();
+    }
+    function playNow() {
+      if (!ac) return;
+      if (playing) { playing = false; visQ.length = 0; ph.fill(-1); pendingBank = null; }   // reinicio alineado
+      playing = true; gStep = 0; nextTime = ac.currentTime + .03; render();
       hook("onPlay", S.bpm);
     }
     function stop() {
@@ -592,7 +600,8 @@
 
     // ----- API pública -----
     const api = {
-      play, stop,
+      play, stop, playNow,
+      audioListo: () => !!ac && ac.state === "running",
       isPlaying: () => playing,
       // TRANSPARENCIA: cambiar el tempo desde afuera (sincronía con el coro)
       setBpm(v) { if (typeof v === "number" && isFinite(v)) { S.bpm = Math.min(200, Math.max(50, Math.round(v))); applyBus(); render(); } },

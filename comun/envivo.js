@@ -74,7 +74,31 @@ window.EnVivo = (() => {
     abre();
   }
 
+  // ---------- Reloj compartido ----------
+  // Cada computador mide la diferencia entre su reloj y el del servidor (se queda con la medición
+  // de menor ida y vuelta). Así un "play en el instante X" suena a la vez en todos los laptops.
+  let desfase = 0, mejorIdaVuelta = Infinity;
+  async function mideReloj() {
+    for (let k = 0; k < 5; k++) {
+      try {
+        const t0 = Date.now();
+        const r = await fetch(API + "/hora", { cache: "no-store" });
+        const { t } = await r.json();
+        const t1 = Date.now(), iv = t1 - t0;
+        if (iv <= mejorIdaVuelta + 5) { mejorIdaVuelta = Math.min(mejorIdaVuelta, iv); desfase = t - (t0 + t1) / 2; }
+      } catch (err) { return; }
+    }
+  }
+  mideReloj();
+  setInterval(() => { mejorIdaVuelta += 20; mideReloj(); }, 30000);   // el reloj puede derivar: se vuelve a medir
+  const ahora = () => Date.now() + desfase;                           // hora del servidor, en ms
+  // Ejecuta fn en el instante "en" (hora del servidor). Si ya pasó, la ejecuta ya.
+  const alInstante = (en, fn) => setTimeout(fn, Math.max(0, (en || 0) - ahora()));
+  const RETRASO = 350;   // margen para que el aviso llegue a todos antes de arrancar
+
   return {
+    ahora, alInstante, RETRASO,
+    get idaVuelta() { return mejorIdaVuelta; },
     conecta, envia,
     escucha: f => oyentes.push(f),
     escuchaEstado: f => oyentesEstado.push(f),

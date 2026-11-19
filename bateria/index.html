@@ -64,16 +64,31 @@
     try { inicial = JSON.parse(localStorage.getItem(GUARDADO) || "null"); } catch (e) { inicial = null; }
 
     let remoto = false;   // true mientras se aplica algo que llegó de otro laptop
+    let ultimoBpm = null, bpmTimer = null, arranque = null;
     const sincro = document.getElementById("sincro");
+    const arrancarEn = en => { clearTimeout(arranque); arranque = EnVivo.alInstante(en, () => { arranque = null; bateria.playNow(); }); };
     const bateria = BateriaAlcantarilla.mount(document.getElementById("bateria"), {
       state: inicial || undefined,
       keys: "global",
-      onChange: s => { try { localStorage.setItem(GUARDADO, JSON.stringify(s)); } catch (e) { /* sin almacenamiento */ } },
+      onChange: s => {
+        try { localStorage.setItem(GUARDADO, JSON.stringify(s)); } catch (e) { /* sin almacenamiento */ }
+        if (s.bpm !== ultimoBpm) {
+          ultimoBpm = s.bpm; clearTimeout(bpmTimer);
+          if (!remoto && sincro.checked) bpmTimer = setTimeout(() => EnVivo.envia({ type: "bpm", bpm: s.bpm }), 150);
+        }
+      },
+      // Play: se elige un instante unos 350 ms en el futuro y todos arrancan juntos
+      startGate: arrancar => {
+        if (!sincro.checked) { arrancar(); return; }
+        const en = EnVivo.ahora() + EnVivo.RETRASO;
+        EnVivo.envia({ type: "play", bpm: bateria.getState().bpm, en });
+        arrancarEn(en);
+      },
       onHit: (i, v) => EnVivo.envia({ type: "dhit", i, vel: v }),
       onBank: b => EnVivo.envia({ type: "bank", bank: b }),
-      onPlay: bpm => { if (!remoto && sincro.checked) EnVivo.envia({ type: "play", bpm }); },
       onStop: () => { if (!remoto && sincro.checked) EnVivo.envia({ type: "stop" }); },
     });
+    ultimoBpm = bateria.getState().bpm;
     const titulo = document.querySelector(".bt-title");
     if (titulo) titulo.textContent = "CAJA DE RITMOS DESTRIPADA";
 
@@ -82,14 +97,22 @@
       if (!sincro.checked) return;
       remoto = true;
       try {
-        if (e.type === "bpm" || (e.type === "play" && e.bpm)) bateria.setBpm(e.bpm);
-        if (e.type === "play" && !bateria.isPlaying()) bateria.play();
+        if (e.type === "bpm" || (e.type === "play" && e.bpm)) { bateria.setBpm(e.bpm); ultimoBpm = e.bpm; }
         if (e.type === "stop" && bateria.isPlaying()) bateria.stop();
       } finally { remoto = false; }
+      if (e.type === "play") {
+        if (!bateria.audioListo()) { aviso = true; return; }
+        arrancarEn(e.en);
+      }
     });
+    let aviso = false;
+    document.addEventListener("pointerdown", () => { aviso = false; });
     const ind = document.getElementById("envivo");
     EnVivo.escuchaEstado(d => { const n = d.clientes.length; ind.textContent = `EN VIVO: ${n} CONECTADO${n === 1 ? "" : "S"}`; });
-    setInterval(() => { if (!EnVivo.conectado) ind.textContent = "EN VIVO: SIN SERVIDOR"; }, 2000);
+    setInterval(() => {
+      if (!EnVivo.conectado) ind.textContent = "EN VIVO: SIN SERVIDOR";
+      if (aviso) ind.textContent = "HAZ CLIC PARA ENCENDER EL AUDIO";
+    }, 1000);
   </script>
 </body>
 </html>

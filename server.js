@@ -110,7 +110,7 @@ function limpiaEvento(e) {
     type: e.type,
     uid: typeof e.uid === "string" ? e.uid.slice(0, 40) : undefined,
     ci: n(e.ci, 0, 4), i: n(e.i, 0, 5), midi: n(e.midi, 0, 127), t: n(e.t, 0, 1), dur: n(e.dur, 0, 10),
-    vel: n(e.vel, 0, 1), bank: n(e.bank, 0, 3), bpm: n(e.bpm, 20, 300), idx: n(e.idx, 0, 7),
+    vel: n(e.vel, 0, 1), bank: n(e.bank, 0, 3), bpm: n(e.bpm, 20, 300), idx: n(e.idx, 0, 7), en: n(e.en, 0, 1e15),
     nombre: typeof e.nombre === "string" ? e.nombre.slice(0, 30) : undefined,
     ts: Date.now(),
   };
@@ -240,6 +240,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === "/api/health") return json(res, 200, { ok: true });
     if (pathname === "/api/envivo/stream" && req.method === "GET") return abreStream(req, res, url);
     if (pathname === "/api/envivo/estado" && req.method === "GET") return json(res, 200, estado());
+    if (pathname === "/api/envivo/hora") return json(res, 200, { t: Date.now() });
     if (pathname === "/api/envivo" && req.method === "POST") {
       const b = await leeCuerpo(req, 64 * 1024);
       const lista = (Array.isArray(b && b.eventos) ? b.eventos : []).slice(0, 200).map(limpiaEvento).filter(Boolean);

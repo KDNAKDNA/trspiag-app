@@ -565,7 +565,7 @@ const GRIDS = [{ id: "mel", y0: SEQ_Y, rowH: ROW_H, ch: 50, n: 5, get: i => bank
 
 // ---------- Widgets dibujados en el lienzo ----------
 const UI = [];
-const addBtn = o => UI.push(Object.assign({ kind: "btn", col: "#1c2520", size: 13 }, o));
+const addBtn = o => UI.push(Object.assign({ kind: "btn", col: "#7cff8a", size: 13 }, o));
 const addKnob = o => UI.push(Object.assign({ kind: "knob", r: 20 }, o));
 const pKnob = (key, o) => addKnob(Object.assign({ get: () => P[key], set: v => P[key] = v }, o));
 const isHidden = w => !!(w.hidden && w.hidden());
@@ -588,10 +588,10 @@ function knobSetNorm(k, n) {
 function knobText(k) { const v = k.get(); return k.opts ? k.opts[v] : k.fmt ? k.fmt(v) : String(v); }
 
 const SECTIONS = [
-  { title: "TEMPO · VOZ", col: "#1c2520" },
+  { title: "TEMPO · VOZ", col: "#7cff8a" },
   { title: "SINTE", col: "#2c6ad1" },
   { title: "FILTRO", col: "#ef8325" },
-  { title: "DELAY · FX", col: "#d4372c" },
+  { title: "DELAY · FX", col: "#ff3d8b" },
 ];
 const pct = v => Math.round(v * 100) + "%";
 const ms = v => v >= 1 ? v.toFixed(2) + " s" : Math.round(v * 1000) + " ms";
@@ -600,7 +600,7 @@ const hz = v => v >= 1000 ? (v / 1000).toFixed(1) + " kHz" : Math.round(v) + " H
 function buildUI() {
   // transporte
   addBtn({ x: 616, y: 14, w: 96, h: 36, label: () => playing ? "■ Stop" : "▶ Play", on: () => playing, click: togglePlay });
-  addBtn({ x: 720, y: 14, w: 78, h: 36, label: () => "● Rec", on: () => rec, click: () => { rec = !rec; flash(rec ? "Rec: canta en el escenario mientras suena" : "Rec apagado"); }, col: "#d4372c" });
+  addBtn({ x: 720, y: 14, w: 78, h: 36, label: () => "● Rec", on: () => rec, click: () => { rec = !rec; flash(rec ? "Rec: canta en el escenario mientras suena" : "Rec apagado"); }, col: "#ff3d8b" });
   "ABCD".split("").forEach((L, j) => addBtn({ x: 812 + j * 42, y: 14, w: 38, h: 36, label: () => L, on: () => bank === j, pending: () => pendingBank === j, click: () => selectBank(j) }));
   addBtn({ x: 988, y: 14, w: 84, h: 36, label: () => "Cadena", on: () => chain, click: () => chain = !chain, col: "#7b49c4" });
   addBtn({ x: 1080, y: 14, w: 104, h: 36, label: () => "Copiar →", click: copyToNext });
@@ -646,7 +646,7 @@ function buildUI() {
     const y = rowY(i), r = () => row(i);
     addBtn({ x: 28, y: y + 32, w: 74, h: 20, size: 10, label: () => "◆ " + MODES[r().mode], click: () => { r().mode = (r().mode + 1) % MODES.length; audition(i, .5); }, col: HAR_COL });
     addBtn({ x: 110, y: y + 6, w: 26, h: 22, size: 11, label: () => "M", on: () => r().mute, click: () => r().mute = !r().mute });
-    addBtn({ x: 140, y: y + 6, w: 26, h: 22, size: 11, label: () => "S", on: () => r().solo, click: () => r().solo = !r().solo, col: "#f2b52c" });
+    addBtn({ x: 140, y: y + 6, w: 26, h: 22, size: 11, label: () => "S", on: () => r().solo, click: () => r().solo = !r().solo, col: "#ffb000" });
     addBtn({ x: 110, y: y + 32, w: 22, h: 22, size: 12, label: () => "−", click: () => r().len = Math.max(1, r().len - 1) });
     addBtn({ x: 162, y: y + 32, w: 22, h: 22, size: 12, label: () => "+", click: () => r().len = Math.min(STEPS, r().len + 1) });
     addKnob({ x: 198, y: y + 22, r: 11, mini: true, label: "sinte", col: c.col, min: 0, max: 1, get: () => c.mix, set: v => c.mix = v, fmt: pct });
@@ -841,7 +841,7 @@ function update() {
 // ---------- Dibujo ----------
 function draw() {
   update();
-  background("#c7d1c3");
+  background("#020a04");
   push(); translate(OX, OY); scale(K);
   drawHeader(); drawStage(); drawPanel(); drawSeq(); drawHarmony(); drawWidgets();
   pop();
@@ -851,9 +851,9 @@ function draw() {
 }
 
 function drawHeader() {
-  noStroke(); fill("#1c2520"); textAlign(LEFT, TOP); textStyle(BOLD); textSize(26);
+  noStroke(); fill("#7cff8a"); textAlign(LEFT, TOP); textStyle(BOLD); textSize(26);
   text("CORO DEL DRAGÓN", 18, 12);
-  textStyle(NORMAL); textSize(11); fill("#4b5a51");
+  textStyle(NORMAL); textSize(11); fill("#3fae55");
   let s;
   if (audioErr) s = "No se pudo iniciar el audio: " + audioErr;
   else if (!ac) s = "Haz clic en cualquier parte para encender el audio";
@@ -869,8 +869,8 @@ function drawStage() {
   ctx.save(); ctx.beginPath();
   ctx.roundRect ? ctx.roundRect(ST.x, ST.y, ST.w, ST.h, 16) : ctx.rect(ST.x, ST.y, ST.w, ST.h);
   ctx.clip();
-  noStroke(); fill("#dfe6da"); rect(ST.x, ST.y, ST.w, ST.h);
-  stroke("#cbd5c7"); strokeWeight(1);
+  noStroke(); fill("#06140a"); rect(ST.x, ST.y, ST.w, ST.h);
+  stroke("#0d2413"); strokeWeight(1);
   for (let r = 0, y = ST.y; y < SHELF; y += 26, r++) {
     line(ST.x, y, ST.x + ST.w, y);
     for (let x = ST.x - (r % 2) * 21; x < ST.x + ST.w; x += 42) { line(x, y, x, Math.min(y + 26, SHELF)); }
@@ -878,34 +878,34 @@ function drawStage() {
   noStroke();
   CHARS.forEach((c, i) => {
     const hov = stageHover && stageCol(stageHover.x) === i;
-    if (c.active || hov) { fill(255, 255, 255, c.active ? 110 : 55); rect(ST.x + i * colW + 4, ST.y + 4, colW - 8, SHELF - ST.y - 8, 12); }
+    if (c.active || hov) { fill(124, 255, 138, c.active ? 34 : 16); rect(ST.x + i * colW + 4, ST.y + 4, colW - 8, SHELF - ST.y - 8, 12); }
   });
-  fill("#4b5a51"); textSize(10); textAlign(LEFT, TOP); text("↑ agudo", ST.x + 10, ST.y + 8);
+  fill("#3fae55"); textSize(10); textAlign(LEFT, TOP); text("↑ agudo", ST.x + 10, ST.y + 8);
 
   // acorde actual, arriba a la derecha
   const ch = displayChord();
   textAlign(RIGHT, TOP); fill(HAR_COL); textStyle(BOLD); textSize(18); text(ch.name, ST.x + ST.w - 12, ST.y + 8);
-  textStyle(NORMAL); textSize(10); fill("#4b5a51"); text(`${ch.roman} · ${NAMES[P.tonic]} ${SCALES[P.scale].name.toLowerCase()}`, ST.x + ST.w - 12, ST.y + 32);
+  textStyle(NORMAL); textSize(10); fill("#3fae55"); text(`${ch.roman} · ${NAMES[P.tonic]} ${SCALES[P.scale].name.toLowerCase()}`, ST.x + ST.w - 12, ST.y + 32);
 
   if (stageHover) {
     const y = constrain(stageHover.y, ST.y, ST.y + ST.h), i = stageCol(stageHover.x), c = CHARS[i];
-    stroke("#1c2520"); strokeWeight(1.2); ctx.setLineDash([5, 6]); line(ST.x, y, ST.x + ST.w, y); ctx.setLineDash([]);
+    stroke("#7cff8a"); strokeWeight(1.2); ctx.setLineDash([5, 6]); line(ST.x, y, ST.x + ST.w, y); ctx.setLineDash([]);
     const lbl = `${c.name} · ${noteName(liveNote(i, stageT(y)))}`;
     textSize(11); const lw = textWidth(lbl) + 14;
     const lx = constrain(stageHover.x + 12, ST.x + 6, ST.x + ST.w - lw - 6), ly = constrain(y - 24, ST.y + 4, ST.y + ST.h - 24);
-    noStroke(); fill("#1c2520"); rect(lx, ly, lw, 18, 9); fill("#dfe6da"); textAlign(LEFT, CENTER); text(lbl, lx + 7, ly + 9.5);
+    noStroke(); fill("#7cff8a"); rect(lx, ly, lw, 18, 9); fill("#06140a"); textAlign(LEFT, CENTER); text(lbl, lx + 7, ly + 9.5);
   }
 
   noStroke();
-  fill("#b07c4a"); rect(ST.x, SHELF, ST.w, 10);
+  fill("#5a3a1e"); rect(ST.x, SHELF, ST.w, 10);
   fill("#7a5230"); rect(ST.x, SHELF + 10, ST.w, 4);
-  fill("#cdd6c9"); rect(ST.x, SHELF + 14, ST.w, ST.h);
+  fill("#07130b"); rect(ST.x, SHELF + 14, ST.w, ST.h);
 
   CHARS.forEach((c, i) => {
     c.x = ST.x + colW * (i + .5);
     const bob = Math.sin(T * 1.6 + i * 1.3) * CS * .006 + (c.active ? Math.sin(T * 11 + i) * CS * .006 : 0);
     if (i === 0) drawRataCosmica(c, c.x, SHELF + bob, CS * 1.06, T); else drawTortugaDragon(c, c.x, SHELF + bob, CS, T);
-    fill("#1c2520"); textAlign(CENTER, TOP); textStyle(BOLD); textSize(11); text(c.name, c.x, SHELF + 20); textStyle(NORMAL);
+    fill("#7cff8a"); textAlign(CENTER, TOP); textStyle(BOLD); textSize(11); text(c.name, c.x, SHELF + 20); textStyle(NORMAL);
   });
   CHARS.forEach((c, i) => {
     if (c.open < .1 || c.showMidi === null) return;
@@ -922,17 +922,17 @@ function drawPanel() {
   noStroke();
   SECTIONS.forEach((s, n) => {
     const x = PANEL.x + n * 151;
-    fill("#e4e9e0"); rect(x, PANEL.y, 145, PANEL.h, 14);
+    fill("#0a1d0f"); rect(x, PANEL.y, 145, PANEL.h, 14);
     fill(s.col); rect(x + 14, PANEL.y + 16, 8, 8, 2);
-    fill("#1c2520"); textAlign(LEFT, CENTER); textStyle(BOLD); textSize(11); text(s.title, x + 28, PANEL.y + 20.5); textStyle(NORMAL);
+    fill("#7cff8a"); textAlign(LEFT, CENTER); textStyle(BOLD); textSize(11); text(s.title, x + 28, PANEL.y + 20.5); textStyle(NORMAL);
   });
 }
 
 function drawSeq() {
-  noStroke(); fill("#1c2520"); textAlign(LEFT, CENTER); textStyle(BOLD); textSize(12);
+  noStroke(); fill("#7cff8a"); textAlign(LEFT, CENTER); textStyle(BOLD); textSize(12);
   const pend = pendingBank !== null ? `  →  ${"ABCD"[pendingBank]} al final del compás` : "";
   text(`SECUENCIADOR · patrón ${"ABCD"[bank]}${pend}`, 18, SEQ_Y - 20);
-  textStyle(NORMAL); fill("#4b5a51"); textSize(10); textAlign(CENTER, CENTER);
+  textStyle(NORMAL); fill("#3fae55"); textSize(10); textAlign(CENTER, CENTER);
   for (let s = 0; s < STEPS; s++) { text(s + 1, GX + s * (CW + CG) + CW / 2, SEQ_Y - 8); }
   GRIDS.forEach(drawGrid);
 }
@@ -942,27 +942,27 @@ function drawGrid(g) {
   const anySolo = rows.some(r => r.solo), hc = hover && cellAt(hover);
   rows.forEach((r, i) => {
     const y = g.y0 + i * g.rowH, c = CHARS[i], dim = r.mute || (anySolo && !r.solo), voz = r.mode === 0;
-    noStroke(); fill(i % 2 ? "#d3dbcf" : "#d9e0d5"); rect(16, y, 1168, g.rowH - 4, 10);
+    noStroke(); fill(i % 2 ? "#0b1f10" : "#0b1f10"); rect(16, y, 1168, g.rowH - 4, 10);
     fill(c.col); rect(16, y, 6, g.rowH - 4, 10, 0, 0, 10);
-    fill(dim ? "#7d8a82" : "#1c2520"); textAlign(LEFT, CENTER); textStyle(BOLD); textSize(12); text(c.name, 30, y + 17); textStyle(NORMAL);
-    fill("#1c2520"); textAlign(CENTER, CENTER); textSize(11); text(r.len, 147, y + 43.5);
+    fill(dim ? "#2f8a3e" : "#7cff8a"); textAlign(LEFT, CENTER); textStyle(BOLD); textSize(12); text(c.name, 30, y + 17); textStyle(NORMAL);
+    fill("#7cff8a"); textAlign(CENTER, CENTER); textSize(11); text(r.len, 147, y + 43.5);
     for (let s = 0; s < STEPS; s++) {
       const x = GX + s * (CW + CG), cy = y + 4, inLen = s < r.len, st = r.steps[s];
       noStroke();
-      fill(!inLen ? "#e6eae2" : Math.floor(s / 4) % 2 ? "#c5cfc1" : "#ecefe8");
+      fill(!inLen ? "#10291a" : Math.floor(s / 4) % 2 ? "#163522" : "#10291a");
       rect(x, cy, CW, H, 7);
       if (inLen && st.on) {
         const col = color(c.col); col.setAlpha(dim ? 50 : 70); fill(col); rect(x, cy, CW, H, 7);
-        fill(dim ? "#9aa59d" : c.col);
+        fill(dim ? "#2f8a3e" : c.col);
         if (voz) { rect(x + 6, cy + 6, CW - 12, H - 12, 4); }        // modo Voz: la altura no cuenta
         else { const h = 6 + st.t * (H - 12); rect(x + 6, cy + H - 4 - h, CW - 12, h, 4); }
         if (hc && hc.g === g && hc.i === i && hc.s === s) {
-          fill(voz ? "#ffffff" : "#1c2520"); textSize(9); textAlign(CENTER, TOP);
+          fill(voz ? "#ffffff" : "#7cff8a"); textSize(9); textAlign(CENTER, TOP);
           text(noteName(noteFor(i, r.mode, st.t, ch)), x + CW / 2, cy + 3);
         }
       }
-      if (!inLen) { stroke("#d5dbd1"); strokeWeight(1); line(x + 8, cy + H - 8, x + CW - 8, cy + 8); }
-      if (playing && rowPh[i] === s) { noFill(); stroke("#1c2520"); strokeWeight(2.5); rect(x - 1, cy - 1, CW + 2, H + 2, 8); }
+      if (!inLen) { stroke("#0d2413"); strokeWeight(1); line(x + 8, cy + H - 8, x + CW - 8, cy + 8); }
+      if (playing && rowPh[i] === s) { noFill(); stroke("#7cff8a"); strokeWeight(2.5); rect(x - 1, cy - 1, CW + 2, H + 2, 8); }
     }
     noStroke();
   });
@@ -970,35 +970,35 @@ function drawGrid(g) {
 
 function drawHarmony() {
   const pr = prog();
-  noStroke(); fill("#1c2520"); textAlign(LEFT, CENTER); textStyle(BOLD); textSize(12);
+  noStroke(); fill("#7cff8a"); textAlign(LEFT, CENTER); textStyle(BOLD); textSize(12);
   text(`ARMONÍA · patrón ${"ABCD"[bank]} · ${NAMES[P.tonic]} ${SCALES[P.scale].name.toLowerCase()}`, 18, HAR_Y - 4);
   textStyle(NORMAL);
   // fila de tónica y escala
-  fill("#1c2520"); textStyle(BOLD); textSize(11); textAlign(LEFT, CENTER);
+  fill("#7cff8a"); textStyle(BOLD); textSize(11); textAlign(LEFT, CENTER);
   text("Tónica", 18, KEY_Y + 15); text("Escala", 634, KEY_Y + 15); textStyle(NORMAL);
-  fill("#f3f5f0"); stroke("#aab4a7"); strokeWeight(1); rect(724, KEY_Y, 186, 30, 8); noStroke();
-  fill("#1c2520"); textAlign(CENTER, CENTER); textStyle(BOLD); textSize(12); text(SCALES[P.scale].name, 817, KEY_Y + 16); textStyle(NORMAL);
+  fill("#020a04"); stroke("#2f8a3e"); strokeWeight(1); rect(724, KEY_Y, 186, 30, 8); noStroke();
+  fill("#7cff8a"); textAlign(CENTER, CENTER); textStyle(BOLD); textSize(12); text(SCALES[P.scale].name, 817, KEY_Y + 16); textStyle(NORMAL);
   // notas de la escala, debajo
-  fill("#4b5a51"); textSize(10); textAlign(LEFT, CENTER);
+  fill("#3fae55"); textSize(10); textAlign(LEFT, CENTER);
   text("Notas: " + [0, 1, 2, 3, 4, 5, 6].map(spellDeg).join(" · "), 78, KEY_Y + 46);
   // fila inferior
-  fill("#1c2520"); textStyle(BOLD); textSize(11); textAlign(LEFT, CENTER);
+  fill("#7cff8a"); textStyle(BOLD); textSize(11); textAlign(LEFT, CENTER);
   text("Acordes", 18, BOT_Y + 15); text("Cambio cada", 196, BOT_Y + 15); text("Ideas", 500, BOT_Y + 15); textStyle(NORMAL);
   textAlign(CENTER, CENTER); textSize(13); textStyle(BOLD); text(pr.len, 135, BOT_Y + 16); textStyle(NORMAL);
-  fill("#f3f5f0"); stroke("#aab4a7"); rect(332, BOT_Y, 114, 30, 8); rect(580, BOT_Y, 222, 30, 8); noStroke();
-  fill("#1c2520"); textSize(11); text(RATE_NAMES[pr.rate], 389, BOT_Y + 16); text(PRESETS[presetIdx].name, 691, BOT_Y + 16);
-  fill("#4b5a51"); textSize(10); textAlign(LEFT, CENTER);
+  fill("#020a04"); stroke("#2f8a3e"); rect(332, BOT_Y, 114, 30, 8); rect(580, BOT_Y, 222, 30, 8); noStroke();
+  fill("#7cff8a"); textSize(11); text(RATE_NAMES[pr.rate], 389, BOT_Y + 16); text(PRESETS[presetIdx].name, 691, BOT_Y + 16);
+  fill("#3fae55"); textSize(10); textAlign(LEFT, CENTER);
   text("Clic en una tarjeta para oír el acorde · − / + cambia el grado · el botón verde cambia el tipo · cada patrón A–D tiene su progresión", 18, BOT_Y + 50);
 }
 
 function drawCard(w, hov) {
   const pr = prog(), k = w.k, act = k < pr.len;
   const sel = act && k === Math.min(selSlot, pr.len - 1), now = playing && playChord && playChord.idx === k && act;
-  noStroke(); fill(now ? HAR_COL : act ? "#e4e9e0" : "#d3dbcf"); rect(w.x, w.y, w.w, w.h, 12);
-  if (sel) { noFill(); stroke("#1c2520"); strokeWeight(2.5); rect(w.x + 1, w.y + 1, w.w - 2, w.h - 2, 11); noStroke(); }
-  else if (hov) { noFill(); stroke("#7d8a82"); strokeWeight(1); rect(w.x, w.y, w.w, w.h, 12); noStroke(); }
-  const ink = now ? "#f3f5f0" : "#1c2520", sub = now ? "#cfe3dc" : "#4b5a51";
-  fill(act ? sub : "#8d998f"); textSize(10); textAlign(LEFT, TOP); text(k + 1, w.x + 10, w.y + 9);
+  noStroke(); fill(now ? HAR_COL : act ? "#0a1d0f" : "#0b1f10"); rect(w.x, w.y, w.w, w.h, 12);
+  if (sel) { noFill(); stroke("#7cff8a"); strokeWeight(2.5); rect(w.x + 1, w.y + 1, w.w - 2, w.h - 2, 11); noStroke(); }
+  else if (hov) { noFill(); stroke("#2f8a3e"); strokeWeight(1); rect(w.x, w.y, w.w, w.h, 12); noStroke(); }
+  const ink = now ? "#020a04" : "#7cff8a", sub = now ? "#10291a" : "#3fae55";
+  fill(act ? sub : "#2f8a3e"); textSize(10); textAlign(LEFT, TOP); text(k + 1, w.x + 10, w.y + 9);
   if (!act) { textAlign(CENTER, CENTER); textSize(11); text("+ agregar", w.x + w.w / 2, w.y + w.h / 2); return; }
   const info = chordInfo(pr.slots[k]);
   fill(ink); textAlign(CENTER, CENTER); textStyle(BOLD); textSize(26); text(info.roman, w.x + w.w / 2, w.y + 40);
@@ -1013,28 +1013,28 @@ function drawWidgets() {
     if (w.draw) { w.draw(w, hov); continue; }
     if (w.kind === "btn") {
       const on = w.on && w.on(), pend = w.pending && w.pending();
-      stroke(on ? w.col : hov ? "#7d8a82" : "#aab4a7"); strokeWeight(1);
-      fill(on ? w.col : hov ? "#ffffff" : "#f3f5f0");
+      stroke(on ? w.col : hov ? "#2f8a3e" : "#2f8a3e"); strokeWeight(1);
+      fill(on ? w.col : hov ? "#163522" : "#020a04");
       rect(w.x, w.y, w.w, w.h, 8);
       if (pend) { noFill(); stroke(w.col); strokeWeight(2); drawingContext.setLineDash([3, 3]); rect(w.x - 3, w.y - 3, w.w + 6, w.h + 6, 10); drawingContext.setLineDash([]); }
-      noStroke(); fill(on ? "#f3f5f0" : "#1c2520"); textAlign(CENTER, CENTER); textStyle(BOLD); textSize(w.size);
+      noStroke(); fill(on ? "#020a04" : "#7cff8a"); textAlign(CENTER, CENTER); textStyle(BOLD); textSize(w.size);
       if (w.label() === "● Rec" && rec && Math.floor(millis() / 450) % 2) fill("#ffd0c8");
       text(w.label(), w.x + w.w / 2, w.y + w.h / 2 + 1); textStyle(NORMAL);
     } else {
       const n = knobNorm(w), a0 = PI * .75, a1 = PI * 2.25, a = a0 + (a1 - a0) * n, r = w.r;
       noFill(); strokeCap(ROUND);
-      stroke("#c2cabe"); strokeWeight(w.mini ? 2.5 : 3.5); arc(w.x, w.y, r * 2 + 8, r * 2 + 8, a0, a1);
+      stroke("#163522"); strokeWeight(w.mini ? 2.5 : 3.5); arc(w.x, w.y, r * 2 + 8, r * 2 + 8, a0, a1);
       stroke(w.col); arc(w.x, w.y, r * 2 + 8, r * 2 + 8, a0, Math.max(a0 + .01, a));
-      noStroke(); fill(hov || (drag && drag.k === w) ? "#ffffff" : "#f6f7f3"); circle(w.x, w.y, r * 2 - 2);
+      noStroke(); fill(hov || (drag && drag.k === w) ? "#163522" : "#020a04"); circle(w.x, w.y, r * 2 - 2);
       fill(w.col); circle(w.x, w.y, r * 1.25);
       stroke("#ffffff"); strokeWeight(w.mini ? 2 : 3); line(w.x, w.y, w.x + Math.cos(a) * r * .55, w.y + Math.sin(a) * r * .55);
       noStroke(); textAlign(CENTER, TOP);
       if (w.mini) {
-        fill("#4b5a51"); textSize(9);
+        fill("#3fae55"); textSize(9);
         text(hov || (drag && drag.k === w) ? knobText(w) : w.label, w.x, w.y + r + 6);
       } else {
-        fill("#1c2520"); textStyle(BOLD); textSize(10); text(w.label, w.x, w.y + r + 9); textStyle(NORMAL);
-        fill("#4b5a51"); textSize(10); text(knobText(w), w.x, w.y + r + 22);
+        fill("#7cff8a"); textStyle(BOLD); textSize(10); text(w.label, w.x, w.y + r + 9); textStyle(NORMAL);
+        fill("#3fae55"); textSize(10); text(knobText(w), w.x, w.y + r + 22);
       }
     }
   }
