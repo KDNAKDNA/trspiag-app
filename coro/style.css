@@ -1,0 +1,109 @@
+@font-face {
+  font-family: "TransMono";
+  src: url("fonts/LiberationMono-Bold.ttf") format("truetype");
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #020a04;
+}
+canvas {
+  display: block;
+}
+
+/* Barra de canciones, estilo computador viejo */
+.coro-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 10px 16px;
+  background: #020a04;
+  border-bottom: 2px solid #2f8a3e;
+  font: 14px/1.3 "TransMono", ui-monospace, Menlo, monospace;
+  text-transform: uppercase;
+  color: #7cff8a;
+  text-shadow: 0 0 6px rgba(124, 255, 138, .45);
+}
+.coro-bar label {
+  color: #ffb000;
+}
+.coro-bar input,
+.coro-bar select,
+.coro-bar button,
+.coro-hub {
+  font: inherit;
+  text-transform: uppercase;
+  color: #7cff8a;
+  background: #020a04;
+  border: 2px solid #2f8a3e;
+  border-radius: 0;
+  padding: 4px 9px;
+}
+.coro-bar input {
+  width: 14em;
+  max-width: 100%;
+  text-transform: none;
+}
+.coro-bar select {
+  max-width: 16em;
+}
+.coro-bar button {
+  cursor: pointer;
+}
+.coro-bar button:hover,
+.coro-hub:hover {
+  background: #7cff8a;
+  color: #020a04;
+  text-shadow: none;
+}
+.coro-bar button[type="submit"] {
+  border-color: #7cff8a;
+}
+.coro-bar button:disabled {
+  opacity: .4;
+  cursor: default;
+}
+.coro-bar :focus-visible {
+  outline: 2px solid #ffb000;
+  outline-offset: 2px;
+}
+.coro-hub {
+  text-decoration: none;
+  border-color: #ffb000;
+  color: #ffb000;
+}
+.coro-sep {
+  width: 2px;
+  height: 22px;
+  background: #2f8a3e;
+}
+.coro-status {
+  color: #2f8a3e;
+}
+.coro-status.is-error {
+  color: #ff3d8b;
+}
+.envivo-estado {
+  margin-left: auto;
+  color: #ffb000;
+}
+
+/* Capa de TV encima de todo: scanlines y viñeta. No recibe clics. */
+.crt-capa {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+  background:
+    repeating-linear-gradient(to bottom, rgba(0, 0, 0, .14) 0, rgba(0, 0, 0, .14) 1px, transparent 1px, transparent 3px),
+    radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, .45) 100%);
+  animation: parpadeo 120ms steps(2) infinite;
+}
+@keyframes parpadeo {
+  50% { opacity: .92; }
+}

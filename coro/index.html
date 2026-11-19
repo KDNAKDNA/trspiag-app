@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CORO DEL DRAGÓN · TRANSPARENCIA</title>
+    <!-- Rutas relativas: la página funciona en cualquier ruta donde se monte -->
+    <link rel="stylesheet" href="style.css" />
+    <script src="lib/p5.min.js"></script>
+  </head>
+  <body>
+    <form class="coro-bar" id="songForm" autocomplete="off">
+      <a class="coro-hub" href="../">&lt;- HUB</a>
+      <span class="coro-sep" aria-hidden="true"></span>
+      <label for="songName">Canción</label>
+      <input id="songName" name="songName" maxlength="80" placeholder="Sin título" />
+      <button type="submit" id="btnSave">Guardar</button>
+      <button type="button" id="btnSaveNew">Guardar como nueva</button>
+      <button type="button" id="btnNew">Nueva</button>
+      <span class="coro-sep" aria-hidden="true"></span>
+      <label for="songList">Cintas</label>
+      <select id="songList"><option value="">Cargando…</option></select>
+      <button type="button" id="btnOpen">Abrir</button>
+      <button type="button" id="btnDelete">Borrar</button>
+      <span id="songStatus" class="coro-status" role="status" aria-live="polite"></span>
+      <span id="envivoEstado" class="envivo-estado">EN VIVO: …</span>
+    </form>
+    <main></main>
+    <div class="crt-capa" aria-hidden="true"></div>
+    <script src="sketch.js"></script>
+    <script src="songs.js"></script>
+    <script src="../comun/envivo.js"></script>
+    <script src="envivo-coro.js"></script>
+  </body>
+</html>

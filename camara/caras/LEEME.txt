@@ -1,0 +1,2 @@
+Pon aquí fotos de caras (.png o .jpg) de personas que estén de acuerdo.
+No se suben a GitHub: ver .gitignore.

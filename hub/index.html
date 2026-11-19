@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TRANSPARENCIA</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Todo pasa dentro de esta "pantalla" 16:9 -->
+  <div id="pantalla">
+    <video id="intro" src="video/intro.mp4" preload="auto" playsinline muted></video>
+    <video id="salida" src="video/salida.mp4" preload="auto" playsinline muted></video>
+    <canvas id="crt"></canvas>
+  </div>
+  <script src="layout.js"></script>
+  <script src="comun/envivo.js" onerror="void 0"></script>
+  <script src="sonido.js"></script>
+  <script src="crt.js"></script>
+  <script src="hub.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "transparencia",
+  "version": "1.0.0",
+  "description": "App de performance en vivo: hub en un cuarto 3D, coro con secuenciador y cámara con censura de caras que reacciona a la música",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

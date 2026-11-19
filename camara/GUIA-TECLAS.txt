@@ -1,0 +1,55 @@
+CENSURA EN VIVO — GUÍA DE TECLAS
+================================
+
+CÓMO TAPAR LAS CARAS
+  Q   cambiar la forma: cuadrado  <->  forma de la cara   (para 1, 2, 3, 4 y 5)
+  1   borroso
+  2   pixelado
+  3   color fijo (negro; pulsa 3 otra vez para cambiar de color)
+  4   colores con el bombo (salta al color opuesto con cada golpe)
+  5   logo en relieve (el logo completo de Transparencia sobre cada cara; late con el bombo)
+  6   cara (solo la cara de la foto, pegada sobre cada músico)
+  7   collage (franjas desfasadas de la cara; se reordenan con el bombo)
+  8   sonrisa (la cara de la foto con sonrisa ancha y ojos grandes)
+  9   cambiar de foto (si pusiste varias fotos en la carpeta "caras")
+  G   cambiar cómo se funde la cara con el color de la escena
+
+  En 6 y 7: flechas arriba/abajo (o izquierda/derecha) = cara más grande o más chica.
+  Más grande = tapa con más margen. Si alguien se mueve mucho, agrándala.
+
+LOOKS (estilos de toda la imagen, inspirados en los pósters)
+  ESPACIO   pasar al siguiente look:
+            ninguno -> fotocopia -> película -> mina -> semitono espejo -> papel doblado -> ninguno
+  N         fotocopia directo (pulsa otra vez para quitarlo)
+
+EFECTOS (se pueden combinar con cualquier look)
+  Z   glitch (franjas que se corren; saltan con el bombo)
+  X   colores corridos (crece con el volumen)
+  V   pulso (la imagen late con el bombo)
+  M   logo grande en relieve sobre toda la imagen
+  K   espejo
+  T   estelas
+  S   sorpresa (combinación al azar)
+  0   apagar todos los efectos y el look
+
+AJUSTES
+  Flechas arriba/abajo   intensidad (en 4: sensibilidad al bombo; en 8: qué tan exagerada la sonrisa)
+  Flechas izq./der.      tamaño de lo que tapa la cara
+  E   cuántas caras se esperan (normalmente 3)
+  B   EMERGENCIA: todo borroso
+
+MÚSICA DEL CORO (TRANSPARENCIA)
+  J   música conectada / apagada. Conectada: el bombo, la caja, los hats, el tom y las voces
+      del coro disparan los efectos. Si el coro se calla 4 segundos, vuelve el micrófono solo.
+  L   looks automáticos: cada patrón del coro (A B C D) cambia el look
+  El bombo nunca cambia el color más de 3 veces por segundo, aunque la música vaya más rápido.
+
+SHOW
+  C   abrir la ventana de control (en la pantalla del laptop)
+  F   pantalla completa (pulsar en la ventana del proyector)
+  H   ocultar / mostrar el recuadro de información
+  D   elegir carpeta para grabar     R   grabar / parar     A   grabar también el sonido del micrófono
+
+FOTOS DE CARAS
+  Pon fotos (.png o .jpg) en la carpeta "caras". Al abrir el programa las encuentra solas.
+  Usa solo fotos de personas que estén de acuerdo y que tengas permiso de usar.

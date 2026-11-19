@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OBJETOS 3D · TRANSPARENCIA</title>
+  <style>
+    @font-face { font-family: "TransMono"; src: url("../fonts/LiberationMono-Bold.ttf") format("truetype"); }
+    html, body { margin: 0; height: 100%; background: #020a04; overflow: hidden; }
+    canvas { display: block; }
+    .barra {
+      position: fixed; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 18px;
+      padding: 14px 20px; font: 16px/1.3 "TransMono", ui-monospace, Menlo, monospace; text-transform: uppercase;
+      color: #7cff8a; text-shadow: 0 0 6px rgba(124, 255, 138, .45); pointer-events: none; z-index: 2;
+    }
+    .barra a { pointer-events: auto; color: #ffb000; text-decoration: none; border: 2px solid #ffb000; padding: 3px 10px; }
+    .barra a:hover { background: #ffb000; color: #020a04; text-shadow: none; }
+    .titulo { font-size: 22px; text-shadow: 2px 1px 0 #ff3d8b, 0 0 8px rgba(124, 255, 138, .5); }
+    .ayuda { position: fixed; bottom: 14px; left: 20px; font: 13px "TransMono", monospace; color: #2f8a3e; z-index: 2; }
+    #estado { margin-left: auto; color: #2f8a3e; }
+    .crt { position: fixed; inset: 0; pointer-events: none; z-index: 1;
+      background: repeating-linear-gradient(to bottom, rgba(0,0,0,.18) 0, rgba(0,0,0,.18) 1px, transparent 1px, transparent 3px),
+                  radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.6) 100%);
+      animation: parpadeo 120ms steps(2) infinite; }
+    @keyframes parpadeo { 50% { opacity: .92; } }
+  </style>
+  <script type="importmap">
+    { "imports": { "three": "./lib/three.module.min.js" } }
+  </script>
+</head>
+<body>
+  <div class="barra">
+    <a href="../">&lt;- HUB</a>
+    <span class="titulo">OBJETOS 3D</span>
+    <span>EL CUARTO DISEÑADO EN BLENDER</span>
+    <span id="estado">CARGANDO…</span>
+  </div>
+  <div class="ayuda">ARRASTRA PARA GIRAR · RUEDA PARA ACERCAR · CLIC DERECHO PARA MOVER · R REINICIA LA VISTA</div>
+  <div class="crt"></div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { GLTFLoader } from "./lib/GLTFLoader.js";
+    import { OrbitControls } from "./lib/OrbitControls.js";
+
+    const estado = document.getElementById("estado");
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    const escena = new THREE.Scene();
+    escena.background = new THREE.Color("#020a04");
+    escena.fog = new THREE.Fog("#020a04", 6, 14);
+
+    const camara = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.05, 50);
+    const controles = new OrbitControls(camara, renderer.domElement);
+    controles.enableDamping = true;
+    controles.autoRotate = true;          // rotación lenta
+    controles.autoRotateSpeed = 0.6;
+
+    // luz: un ambiente bajo, el brillo verde de la TV y el tubo fluorescente
+    escena.add(new THREE.HemisphereLight("#c8ffd0", "#0b0f0c", 0.6));
+    const tubo = new THREE.DirectionalLight("#d8ffe0", 1.6);
+    tubo.position.set(1, 4, 2); tubo.castShadow = true; escena.add(tubo);
+    const brilloTV = new THREE.PointLight("#7cff8a", 6, 4, 1.5);
+    escena.add(brilloTV);
+
+    // piso oscuro para recibir sombras
+    const piso = new THREE.Mesh(new THREE.CircleGeometry(4, 64), new THREE.MeshStandardMaterial({ color: "#0a120c", roughness: .9 }));
+    piso.rotation.x = -Math.PI / 2; piso.receiveShadow = true; escena.add(piso);
+
+    let vistaInicial = null;
+    new GLTFLoader().load("assets/cuarto.glb", gltf => {
+      const cuarto = gltf.scene;
+      cuarto.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+
+      // la pantalla de la TV muestra el menú del hub
+      const pantalla = cuarto.getObjectByName("TV_Pantalla");
+      if (pantalla) {
+        const tex = new THREE.TextureLoader().load("../textures/pantalla_hub_1920.png");
+        tex.colorSpace = THREE.SRGBColorSpace; tex.magFilter = THREE.NearestFilter; tex.flipY = false;
+        pantalla.material = new THREE.MeshBasicMaterial({ map: tex });
+        const p = new THREE.Vector3(); pantalla.getWorldPosition(p);
+        brilloTV.position.copy(p).add(new THREE.Vector3(0, 0, .6));
+      }
+
+      // centrar todo sobre el piso
+      const caja = new THREE.Box3().setFromObject(cuarto);
+      const centro = caja.getCenter(new THREE.Vector3());
+      cuarto.position.x -= centro.x; cuarto.position.z -= centro.z; cuarto.position.y -= caja.min.y;
+      escena.add(cuarto);
+      if (pantalla) { const p = new THREE.Vector3(); pantalla.getWorldPosition(p); brilloTV.position.copy(p).add(new THREE.Vector3(0, 0, .6)); }
+
+      const tam = caja.getSize(new THREE.Vector3()).length();
+      controles.target.set(0, caja.getSize(new THREE.Vector3()).y * .45, 0);
+      camara.position.set(tam * .15, tam * .35, tam * .75);
+      vistaInicial = camara.position.clone();
+      controles.update();
+      estado.textContent = "LISTO";
+    }, ev => {
+      if (ev.total) estado.textContent = `CARGANDO ${Math.round(ev.loaded / ev.total * 100)}%`;
+    }, err => {
+      console.error(err); estado.textContent = "SIN SEÑAL: NO SE PUDO CARGAR EL MODELO";
+    });
+
+    // si el usuario mueve la cámara, la rotación automática se detiene un rato
+    let pausa = null;
+    controles.addEventListener("start", () => { controles.autoRotate = false; clearTimeout(pausa); });
+    controles.addEventListener("end", () => { pausa = setTimeout(() => { controles.autoRotate = true; }, 4000); });
+    addEventListener("keydown", e => {
+      if (e.key.toLowerCase() === "r" && vistaInicial) { camara.position.copy(vistaInicial); controles.update(); }
+    });
+
+    addEventListener("resize", () => {
+      camara.aspect = innerWidth / innerHeight; camara.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+
+    renderer.setAnimationLoop(t => {
+      brilloTV.intensity = 5 + Math.sin(t * .02) * .4 + (Math.random() < .02 ? -3 : 0);   // parpadeo de la TV
+      controles.update();
+      renderer.render(escena, camara);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EN VIVO · TRANSPARENCIA</title>
+  <style>
+    @font-face { font-family: "TransMono"; src: url("fonts/LiberationMono-Bold.ttf") format("truetype"); }
+    html, body { margin: 0; min-height: 100%; background: #020a04; }
+    body {
+      font: 18px/1.5 "TransMono", ui-monospace, Menlo, monospace; text-transform: uppercase;
+      color: #7cff8a; text-shadow: 0 0 6px rgba(124, 255, 138, .45);
+      padding: 28px 40px; box-sizing: border-box;
+    }
+    a { color: #ffb000; text-decoration: none; border: 2px solid #ffb000; padding: 2px 10px; }
+    a:hover { background: #ffb000; color: #020a04; text-shadow: none; }
+    h1 { font-size: 44px; margin: 18px 0 4px; letter-spacing: 2px; text-shadow: 3px 2px 0 #ff3d8b, 0 0 10px rgba(124,255,138,.5); }
+    .sub { color: #ffb000; margin-bottom: 18px; }
+    .linea { border-top: 2px solid #2f8a3e; margin: 18px 0; }
+    .tres { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .caja { border: 2px solid #2f8a3e; padding: 10px 14px; min-height: 64px; }
+    .caja h2 { font-size: 16px; color: #ffb000; margin: 0 0 6px; }
+    .dim { color: #2f8a3e; }
+    .on { color: #020a04; background: #7cff8a; text-shadow: none; }
+    .fila { display: flex; gap: 10px; flex-wrap: wrap; }
+    .luz { border: 2px solid #2f8a3e; padding: 4px 10px; transition: background .15s, color .15s; }
+    .dir { font-size: 26px; color: #fff; }
+    #log { font-size: 14px; color: #2f8a3e; height: 180px; overflow: hidden; }
+    .crt { position: fixed; inset: 0; pointer-events: none;
+      background: repeating-linear-gradient(to bottom, rgba(0,0,0,.18) 0, rgba(0,0,0,.18) 1px, transparent 1px, transparent 3px),
+                  radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,.5) 100%); }
+  </style>
+</head>
+<body>
+  <a href="../">&lt;- HUB</a>
+  <h1>EN VIVO</h1>
+  <div class="sub">LOS TRES LAPTOPS AL TIEMPO</div>
+
+  <div class="caja">
+    <h2>PARA CONECTAR LOS OTROS LAPTOPS, ABRE EN CHROME:</h2>
+    <div id="dirs" class="dir">…</div>
+    <div class="dim" id="camdir">LA CÁMARA SE ABRE EN EL LAPTOP DEL SERVIDOR: HTTP://LOCALHOST:3000/CAMARA/</div>
+  </div>
+
+  <div class="linea"></div>
+  <div class="tres">
+    <div class="caja"><h2>SEÑAL</h2><div id="senal">BUSCANDO…</div></div>
+    <div class="caja"><h2>TEMPO</h2><div id="tempo">BPM ---</div></div>
+    <div class="caja"><h2>CONECTADOS</h2><div id="quien">…</div></div>
+  </div>
+
+  <div class="linea"></div>
+  <h2 style="font-size:16px;color:#ffb000">VOCES</h2>
+  <div class="fila" id="voces"></div>
+  <h2 style="font-size:16px;color:#ffb000">ACORDE</h2>
+  <div class="fila"><span class="luz" id="acorde" style="font-size:28px">---</span></div>
+
+  <div class="linea"></div>
+  <div id="log"></div>
+  <div class="crt"></div>
+
+  <script src="../comun/envivo.js"></script>
+  <script>
+    const VOCES = ["RATA CÓSMICA", "CENIZA", "CUERNO", "CIRCUITO", "CHISPA"];
+    const BAT = ["BOMBO", "CAJA", "HAT", "HAT ABIERTO", "PALMAS", "TOM"];
+    const $ = id => document.getElementById(id);
+    const luces = (cont, nombres) => nombres.map(n => { const s = document.createElement("span"); s.className = "luz"; s.textContent = n; cont.appendChild(s); return s; });
+    const lv = luces($("voces"), VOCES);
+    const prende = (el, ms) => { el.classList.add("on"); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("on"), ms); };
+    const log = [];
+    function anota(t) {
+      log.unshift(new Date().toLocaleTimeString("es-CO", { hour12: false }) + "  " + t);
+      log.length = Math.min(log.length, 9);
+      $("log").innerHTML = log.join("<br>");
+    }
+
+    $("camdir").textContent = `LA CÁMARA SE ABRE EN EL LAPTOP DEL SERVIDOR: HTTP://LOCALHOST:${location.port || 80}/CAMARA/`;
+    EnVivo.conecta("panel", "PANEL");
+    EnVivo.escuchaEstado(d => {
+      $("dirs").innerHTML = d.direcciones.length ? d.direcciones.join("<br>") : "SIN RED: CONECTA ESTE LAPTOP AL ROUTER";
+      $("tempo").textContent = (d.sonando ? "▶ " : "■ ") + "BPM " + (d.bpm || "---");
+      const roles = {};
+      for (const c of d.clientes) { roles[c.rol] = (roles[c.rol] || 0) + 1; }
+      $("quien").innerHTML = ["coro", "camara", "panel"].map(r => `${r === "camara" ? "CÁMARA" : r.toUpperCase()}: ${roles[r] || 0}`).join("<br>");
+    });
+    EnVivo.escucha(e => {
+      if (e.type === "note" && lv[e.ci]) { prende(lv[e.ci], Math.max(120, (e.dur || .2) * 1000)); }
+      else if (e.type === "chord") { $("acorde").textContent = e.nombre || "?"; prende($("acorde"), 200); }
+      else if (e.type === "bank") { anota("PATRÓN " + "ABCD"[e.bank]); }
+      else if (e.type === "play") { anota("PLAY · BPM " + (e.bpm || "")); }
+      else if (e.type === "stop") { anota("STOP"); }
+      else if (e.type === "bpm") { anota("TEMPO " + e.bpm); }
+    });
+    setInterval(() => {
+      $("senal").innerHTML = !EnVivo.conectado ? "<span style='color:#ff3d8b'>SIN SERVIDOR</span>"
+        : EnVivo.silencio < 1500 ? "<span class='on'>&nbsp;SONANDO&nbsp;</span>" : "CONECTADO · EN SILENCIO";
+    }, 250);
+  </script>
+</body>
+</html>

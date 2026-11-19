@@ -1,0 +1,19 @@
+html, body { margin: 0; padding: 0; background: #000; overflow: hidden; }
+canvas { display: block; }
+body.nocursor { cursor: none; }
+
+#hud {
+  position: fixed; top: 14px; left: 14px; max-width: 560px;
+  background: rgba(10, 10, 10, .82); color: #eee;
+  font: 12px/1.55 ui-monospace, Menlo, monospace;
+  padding: 10px 14px; border: 1px solid #333; border-radius: 10px;
+}
+#hud b { color: #fff; }
+#hud .rec { color: #ff3b30; font-weight: bold; }
+#hud .ok { color: #34c759; font-weight: bold; }
+#hud .warn { color: #ffcc00; }
+#hud div.warn { margin-top: 6px; }
+#hud .keys { margin-top: 8px; padding-top: 8px; border-top: 1px solid #333; color: #999; }
+
+body.control { overflow: auto; }
+body.control #hud { position: static; max-width: none; margin: 12px; font-size: 14px; }
